@@ -567,19 +567,6 @@ extension WatchContext on BuildContext {
   /// - [ReadContext] and its `read` method, similar to [watch], but doesn't make
   ///   widgets rebuild if the value obtained changes.
   T watch<T>() {
-    assert(
-        widget is LayoutBuilder ||
-            widget is SliverWithKeepAliveWidget ||
-            debugDoingBuild ||
-            debugIsInInheritedProviderUpdate,
-        '''
-Tried to use `context.watch<$T>` outside of the `build` method or `update` callback of a provider.
-
-This is likely a mistake, as it doesn't make sense to rebuild a widget when the value
-obtained changes, if that value is not used to build other widgets.
-
-Consider using `context.read<$T> instead.
-''');
     return Provider.of<T>(this);
   }
 }
