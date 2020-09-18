@@ -237,30 +237,13 @@ class Provider<T> extends InheritedProvider<T> {
   /// )
   /// ```
   static T of<T>(BuildContext context, {bool listen = true}) {
-    assert(context != null);
-    assert(
-      context.owner.debugBuilding ||
-          listen == false ||
-          debugIsInInheritedProviderUpdate,
-      '''
-Tried to listen to a value exposed with provider, from outside of the widget tree.
 
-This is likely caused by an event handler (like a button's onPressed) that called
-Provider.of without passing `listen: false`.
-
-To fix, write:
-Provider.of<$T>(context, listen: false);
-
-It is unsupported because may pointlessly rebuild the widget associated to the
-event handler, when the widget tree doesn't care about the value.
-
-The context used was: $context
-''',
-    );
-
+    ///如果listen为false,则只获取它的Inherited,并不会把InheritedWidget和调用的widget绑定在一起
+    ///也就是如果InheritedWidget更新的话并不会触发更新调用的widget
     final inheritedElement = _inheritedElementOf<T>(context);
 
     if (listen) {
+      ///如果listen,它会绑定InheritedWidget和引用Widget之间的关系,当InheritedWidget的值发生改变的时候会触发更新所调用的widget
       context.dependOnInheritedElement(inheritedElement);
     }
 
@@ -270,31 +253,9 @@ The context used was: $context
   static _InheritedProviderScopeElement<T> _inheritedElementOf<T>(
     BuildContext context,
   ) {
-    assert(context != null, '''
-Tried to call context.read/watch/select or similar on a `context` that is null.
-
-This can happen if you used the context of a StatefulWidget and that
-StatefulWidget was disposed.
-''');
-    assert(
-      _debugIsSelecting == false,
-      'Cannot call context.read/watch/select inside the callback of a context.select',
-    );
-    assert(
-      T != dynamic,
-      '''
-Tried to call Provider.of<dynamic>. This is likely a mistake and is therefore
-unsupported.
-
-If you want to expose a variable that can be anything, consider changing
-`dynamic` to `Object` instead.
-''',
-    );
     _InheritedProviderScopeElement<T> inheritedElement;
 
     if (context.widget is _InheritedProviderScope<T>) {
-      // An InheritedProvider<T>'s update tries to obtain a parent provider of
-      // the same type.
       context.visitAncestorElements((parent) {
         inheritedElement = parent.getElementForInheritedWidgetOfExactType<
             _InheritedProviderScope<T>>() as _InheritedProviderScopeElement<T>;
@@ -580,16 +541,6 @@ extension ReadContext on BuildContext {
   ///   will make the widget tree rebuild when the obtained value changes.
   /// - [Locator], a typedef to make it easier to pass [read] to objects.
   T read<T>() {
-    assert(
-        debugIsInInheritedProviderCreate ||
-            (!debugDoingBuild && !debugIsInInheritedProviderUpdate),
-        '''
-Tried to use `context.read<$T>` inside either a `build` method or the `update` callback of a provider.
-
-This is unsafe to do so. Instead, consider using `context.watch<$T>`.
-If you used `context.read` voluntarily as a performance optimisation, the solution
-is instead to use `context.select`.
-''');
     return Provider.of<T>(this, listen: false);
   }
 }

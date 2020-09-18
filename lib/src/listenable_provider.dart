@@ -29,8 +29,7 @@ class ListenableProvider<T extends Listenable> extends InheritedProvider<T> {
     bool lazy,
     TransitionBuilder builder,
     Widget child,
-  })  : assert(create != null),
-        super(
+  })  : super(
           key: key,
           startListening: _startListening,
           create: create,
@@ -39,29 +38,6 @@ class ListenableProvider<T extends Listenable> extends InheritedProvider<T> {
               ? null
               : (value) {
                   if (value is ChangeNotifier) {
-                    // ignore: invalid_use_of_protected_member
-                    assert(!value.hasListeners, '''
-The default constructor of ListenableProvider/ChangeNotifierProvider
-must create a new, unused Listenable.
-
-If you want to reuse an existing Listenable, use the second constructor:
-
-- DO use ChangeNotifierProvider.value to provider an existing ChangeNotifier:
-
-MyChangeNotifier variable;
-ChangeNotifierProvider.value(
-  value: variable,
-  child: ...
-)
-
-- DON'T reuse an existing ChangeNotifier using the default constructor.
-
-MyChangeNotifier variable;
-ChangeNotifierProvider(
-  create: (_) => variable,
-  child: ...
-)
-''');
                   }
                 },
           lazy: lazy,
@@ -89,7 +65,10 @@ ChangeNotifierProvider(
     InheritedContext<Listenable> e,
     Listenable value,
   ) {
+    ///给ViewModel添加addListener方法
+    ///这里的e.markNeedsNotifyDependents 会触发更新.
     value?.addListener(e.markNeedsNotifyDependents);
+    ///返回取消订阅的方法
     return () => value?.removeListener(e.markNeedsNotifyDependents);
   }
 }

@@ -152,10 +152,6 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
 
   @override
   Widget buildWithChild(BuildContext context, Widget child) {
-    assert(
-      builder != null || child != null,
-      '$runtimeType used outside of MultiProvider must specify a child',
-    );
     return _InheritedProviderScope<T>(
       owner: this,
       child: builder != null
@@ -222,37 +218,9 @@ extension SelectContext on BuildContext {
   ///
   /// It is fine to call `select` multiple times.
   R select<T, R>(R selector(T value)) {
-    assert(widget is! SliverWithKeepAliveWidget, '''
-    Tried to use context.select inside a SliverList/SliderGridView.
-
-    This is likely a mistake, as instead of rebuilding only the item that cares
-    about the selected value, this would rebuild the entire list/grid.
-
-    To fix, add a `Builder` or extract the content of `itemBuilder` in a separate widget:
-
-    ```dart
-    ListView.builder(
-      itemBuilder: (context, index) {
-        return Builder(builder: (context) {
-          final todo = context.select((TodoList list) => list[index]);
-          return Text(todo.name);
-        });
-      },
-    );
-    ```
-    ''');
-    assert(widget is LayoutBuilder || debugDoingBuild, '''
-Tried to use `context.select` outside of the `build` method of a widget.
-
-Any usage other than inside the `build` method of a widget are not supported.
-''');
     final inheritedElement = Provider._inheritedElementOf<T>(this);
     try {
       var value = inheritedElement.value;
-      assert(() {
-        _debugIsSelecting = true;
-        return true;
-      }());
       final selected = selector(value);
       dependOnInheritedElement(
         inheritedElement,
@@ -261,10 +229,6 @@ Any usage other than inside the `build` method of a widget are not supported.
       );
       return selected;
     } finally {
-      assert(() {
-        _debugIsSelecting = false;
-        return true;
-      }());
     }
   }
 }
@@ -487,7 +451,7 @@ If you're in this situation, consider passing a `key` unique to each individual 
   @override
   void markNeedsNotifyDependents() {
     if (!_isNotifyDependentsEnabled) return;
-
+    ///这里调用的Element的markNeedsBuild
     markNeedsBuild();
     _shouldNotifyDependents = true;
   }
@@ -585,13 +549,13 @@ class _CreateInheritedProvider<T> extends _Delegate<T> {
     this.debugCheckInvalidValueType,
     this.startListening,
     this.dispose,
-  })  : assert(create != null || update != null),
-        _updateShouldNotify = updateShouldNotify;
+  })  : _updateShouldNotify = updateShouldNotify;
 
   final Create<T> create;
   final T Function(BuildContext context, T value) update;
   final UpdateShouldNotify<T> _updateShouldNotify;
   final void Function(T value) debugCheckInvalidValueType;
+  ///开始监听函数.
   final StartListening<T> startListening;
   final Dispose<T> dispose;
 
@@ -617,70 +581,28 @@ class _CreateInheritedProviderState<T>
 
   @override
   T get value {
-    bool _debugPreviousIsInInheritedProviderCreate;
-    bool _debugPreviousIsInInheritedProviderUpdate;
-
-    assert(() {
-      _debugPreviousIsInInheritedProviderCreate =
-          debugIsInInheritedProviderCreate;
-      _debugPreviousIsInInheritedProviderUpdate =
-          debugIsInInheritedProviderUpdate;
-      return true;
-    }());
 
     if (!_didInitValue) {
       _didInitValue = true;
       if (delegate.create != null) {
-        assert(debugSetInheritedLock(true));
         try {
-          assert(() {
-            debugIsInInheritedProviderCreate = true;
-            debugIsInInheritedProviderUpdate = false;
-            return true;
-          }());
+          ///这里的create就是初始化时传入的create参数
+          ///ChangeNotifierProvider(create: (_) => Counter()),
           _value = delegate.create(element);
         } finally {
-          assert(() {
-            debugIsInInheritedProviderCreate =
-                _debugPreviousIsInInheritedProviderCreate;
-            debugIsInInheritedProviderUpdate =
-                _debugPreviousIsInInheritedProviderUpdate;
-            return true;
-          }());
         }
-        assert(debugSetInheritedLock(false));
-
-        assert(() {
-          delegate.debugCheckInvalidValueType?.call(_value);
-          return true;
-        }());
       }
       if (delegate.update != null) {
         try {
-          assert(() {
-            debugIsInInheritedProviderCreate = false;
-            debugIsInInheritedProviderUpdate = true;
-            return true;
-          }());
           _value = delegate.update(element, _value);
         } finally {
-          assert(() {
-            debugIsInInheritedProviderCreate =
-                _debugPreviousIsInInheritedProviderCreate;
-            debugIsInInheritedProviderUpdate =
-                _debugPreviousIsInInheritedProviderUpdate;
-            return true;
-          }());
         }
 
-        assert(() {
-          delegate.debugCheckInvalidValueType?.call(_value);
-          return true;
-        }());
       }
     }
 
     element._isNotifyDependentsEnabled = false;
+    ///这里的_removeListener就是startListing返回的取消订阅事件 [ListenableProvider._startListening]
     _removeListener ??= delegate.startListening?.call(element, _value);
     element._isNotifyDependentsEnabled = true;
     assert(delegate.startListening == null || _removeListener != null);
@@ -690,6 +612,7 @@ class _CreateInheritedProviderState<T>
   @override
   void dispose() {
     super.dispose();
+    ///嗲用取消订阅的方法
     _removeListener?.call();
     if (_didInitValue) {
       delegate.dispose?.call(element, _value);
@@ -734,28 +657,9 @@ class _CreateInheritedProviderState<T>
 
       bool _debugPreviousIsInInheritedProviderCreate;
       bool _debugPreviousIsInInheritedProviderUpdate;
-      assert(() {
-        _debugPreviousIsInInheritedProviderCreate =
-            debugIsInInheritedProviderCreate;
-        _debugPreviousIsInInheritedProviderUpdate =
-            debugIsInInheritedProviderUpdate;
-        return true;
-      }());
       try {
-        assert(() {
-          debugIsInInheritedProviderCreate = false;
-          debugIsInInheritedProviderUpdate = true;
-          return true;
-        }());
         _value = delegate.update(element, _value);
       } finally {
-        assert(() {
-          debugIsInInheritedProviderCreate =
-              _debugPreviousIsInInheritedProviderCreate;
-          debugIsInInheritedProviderUpdate =
-              _debugPreviousIsInInheritedProviderUpdate;
-          return true;
-        }());
       }
 
       if (delegate._updateShouldNotify != null) {
@@ -765,10 +669,6 @@ class _CreateInheritedProviderState<T>
       }
 
       if (shouldNotify) {
-        assert(() {
-          delegate.debugCheckInvalidValueType?.call(_value);
-          return true;
-        }());
         if (_removeListener != null) {
           _removeListener();
           _removeListener = null;
@@ -820,7 +720,6 @@ class _ValueInheritedProviderState<T>
     element._isNotifyDependentsEnabled = false;
     _removeListener ??= delegate.startListening?.call(element, delegate.value);
     element._isNotifyDependentsEnabled = true;
-    assert(delegate.startListening == null || _removeListener != null);
     return delegate.value;
   }
 
