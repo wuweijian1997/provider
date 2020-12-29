@@ -13,8 +13,6 @@ class ChangeNotifierProvider<T extends ChangeNotifier>
 
   /// Creates a [ChangeNotifier] using `create` and automatically
   /// dispose it when [ChangeNotifierProvider] is removed from the widget tree.
-  ///
-  /// `create` must not be `null`.
   ChangeNotifierProvider({
     Key key,
     @required Create<T> create,

@@ -10,14 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   provider:
+    path: ../
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-dependency_overrides:
-  provider:
-    path: ../
 
 flutter:
   uses-material-design: true

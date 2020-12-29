@@ -108,35 +108,6 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
 
   /// Syntax sugar for obtaining a [BuildContext] that can read the provider
   /// created.
-  ///
-  /// This code:
-  ///
-  /// ```dart
-  /// Provider<int>(
-  ///   create: (context) => 42,
-  ///   builder: (context, child) {
-  ///     final value = context.watch<int>();
-  ///     return Text('$value');
-  ///   }
-  /// )
-  /// ```
-  ///
-  /// is strictly equivalent to:
-  ///
-  /// ```dart
-  /// Provider<int>(
-  ///   create: (context) => 42,
-  ///   child: Builder(
-  ///     builder: (context) {
-  ///       final value = context.watch<int>();
-  ///       return Text('$value');
-  ///     },
-  ///   ),
-  /// )
-  /// ```
-  ///
-  /// For an explanation on the `child` parameter that `builder` receives,
-  /// see the "Performance optimizations" section of [AnimatedBuilder].
   final TransitionBuilder builder;
 
   @override
