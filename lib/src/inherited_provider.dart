@@ -144,7 +144,6 @@ class _InheritedProviderElement<T> extends SingleChildStatelessElement {
   }
 }
 
-bool _debugIsSelecting = false;
 
 /// Adds a `select` method on [BuildContext].
 extension SelectContext on BuildContext {
@@ -327,16 +326,8 @@ class _InheritedProviderScopeElement<T> extends InheritedElement
 
         for (final updateShouldNotify in dependencies.selectors) {
           try {
-            assert(() {
-              _debugIsSelecting = true;
-              return true;
-            }());
             shouldNotify = updateShouldNotify(value);
           } finally {
-            assert(() {
-              _debugIsSelecting = false;
-              return true;
-            }());
           }
           if (shouldNotify) {
             break;
@@ -591,43 +582,13 @@ class _CreateInheritedProviderState<T>
   }
 
   @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    if (_didInitValue) {
-      properties
-        ..add(DiagnosticsProperty('value', value))
-        ..add(
-          FlagProperty(
-            null,
-            value: _removeListener != null,
-            defaultValue: false,
-            ifTrue: 'listening to value',
-          ),
-        );
-    } else {
-      properties.add(
-        FlagProperty(
-          'value',
-          value: true,
-          showName: true,
-          ifTrue: '<not yet loaded>',
-        ),
-      );
-    }
-  }
-
-  @override
   void build(bool isBuildFromExternalSources) {
     var shouldNotify = false;
-    // Don't call `update` unless the build was triggered from `updated`/`didChangeDependencies`
-    // otherwise `markNeedsNotifyDependents` will trigger unnecessary `update` calls
     if (isBuildFromExternalSources &&
         _didInitValue &&
         delegate.update != null) {
       final previousValue = _value;
 
-      bool _debugPreviousIsInInheritedProviderCreate;
-      bool _debugPreviousIsInInheritedProviderUpdate;
       try {
         _value = delegate.update(element, _value);
       } finally {
@@ -717,19 +678,6 @@ class _ValueInheritedProviderState<T>
   void dispose() {
     super.dispose();
     _removeListener?.call();
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(
-      FlagProperty(
-        null,
-        value: _removeListener != null,
-        defaultValue: false,
-        ifTrue: 'listening to value',
-      ),
-    );
   }
 
   @override

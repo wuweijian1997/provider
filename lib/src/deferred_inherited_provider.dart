@@ -105,26 +105,6 @@ abstract class _DeferredDelegateState<T, R, W extends _DeferredDelegate<T, R>>
       _value,
     );
     element._isNotifyDependentsEnabled = true;
-    assert(element.hasValue, '''
-The callback "startListening" was called, but it left DeferredInhertitedProviderElement<$T, $R>
-in an unitialized state.
-
-It is necessary for "startListening" to call "setState" at least once the very
-first time "value" is requested.
-
-To fix, consider:
-
-DeferredInheritedProvider(
-  ...,
-  startListening: (element, setState, controller, value) {
-    if (!element.hasValue) {
-      setState(myInitialValue); // TODO replace myInitialValue with your own
-    }
-    ...
-  }
-)
-    ''');
-    assert(_removeListener != null);
     return _value;
   }
 
@@ -222,33 +202,6 @@ class _CreateDeferredInheritedProviderElement<T, R>
     }
   }
 
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    if (isLoaded) {
-      properties
-        ..add(DiagnosticsProperty('controller', controller))
-        ..add(DiagnosticsProperty('value', value));
-    } else {
-      properties
-        ..add(
-          FlagProperty(
-            'controller',
-            value: true,
-            showName: true,
-            ifTrue: '<not yet loaded>',
-          ),
-        )
-        ..add(
-          FlagProperty(
-            'value',
-            value: true,
-            showName: true,
-            ifTrue: '<not yet loaded>',
-          ),
-        );
-    }
-  }
 }
 
 class _ValueDeferredInheritedProvider<T, R> extends _DeferredDelegate<T, R> {
@@ -288,21 +241,4 @@ class _ValueDeferredInheritedProviderState<T, R> extends _DeferredDelegateState<
 
   @override
   T get controller => delegate.value;
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    if (_removeListener != null) {
-      properties.add(DiagnosticsProperty('value', value));
-    } else {
-      properties.add(
-        FlagProperty(
-          'value',
-          value: true,
-          showName: true,
-          ifTrue: '<not yet loaded>',
-        ),
-      );
-    }
-  }
 }
